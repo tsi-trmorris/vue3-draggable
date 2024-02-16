@@ -10,46 +10,37 @@
         @itemDragOver="onItemDragOver"
         @dragenter.prevent
       >
-        <slot name="item" :item="item.data"></slot>
+        <slot
+          name="item"
+          :item="item.data"
+        ></slot>
       </draggable-item>
     </transition-group>
   </div>
 </template>
 
-<script>
-import { toRefs } from "vue";
-import DraggableItem from "./DraggableItem";
-import { useDraggableContainer } from "../composables/draggable";
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useDraggableContainer } from '@/composables/draggable'
+import DraggableItem from './DraggableItem.vue'
 
-export default {
-  name: "Draggable",
-  components: {
-    DraggableItem
-  },
-  props: {
-    modelValue: Array,
-    transition: {
-      default: "0",
-      type: String
-    }
-  },
-  setup(props, context) {
-    const { modelValue } = toRefs(props);
-    const {
-      id,
-      items,
-      onDragOver,
-      onItemDragOver,
-    } = useDraggableContainer(modelValue, context);
+const modelValue = defineModel<any[]>({ required: true })
 
-    return { id, items, onDragOver, onItemDragOver };
-  },
-  computed: {
-    transitionStyle() {
-      return `transform ${this.transition}ms`;
-    }
+const props = withDefaults(
+  defineProps<{
+    transition: string
+  }>(),
+  {
+    transition: '0',
   }
-};
+)
+
+const transitionStyle = computed(() => {
+  return `transform ${props.transition}ms`
+})
+
+const { id, items, onDragOver, onItemDragOver } =
+  useDraggableContainer(modelValue)
 </script>
 
 <style scoped>

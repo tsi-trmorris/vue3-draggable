@@ -34,22 +34,17 @@
   </div>
 </template>
 
-<script>
-import Draggable from "./components/DraggableContainer";
-export default {
-  name: "Sample",
-  components: {
-    Draggable
-  },
-  data() {
-    return {
-      items1: Array(5)
-        .fill({})
-        .map((_, index) => ({ title: `Item ${index + 1}` })),
-      items2: []
-    };
-  }
-};
+<script setup lang="ts">
+import { ref } from 'vue'
+import Draggable from '@/components/DraggableContainer.vue'
+
+const items1 = ref(
+  Array(5)
+    .fill({})
+    .map((_, index) => ({ title: `Item ${index + 1}` }))
+)
+
+const items2 = ref<{}[]>([])
 </script>
 
 <style>
@@ -58,11 +53,13 @@ export default {
   display: flex;
   flex-direction: row;
 }
+
 body {
   display: flex;
   padding-top: 100px;
   justify-content: center;
 }
+
 .draggable-item {
   display: flex;
   justify-content: center;
@@ -71,6 +68,7 @@ body {
   margin: 1%;
   padding: 1%;
 }
+
 .drop-zone {
   display: flex;
   flex-direction: column;
@@ -80,6 +78,7 @@ body {
   width: 400px;
   height: 200px;
 }
+
 pre {
   background-color: #eee;
   margin: 30px;

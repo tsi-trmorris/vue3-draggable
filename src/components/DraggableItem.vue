@@ -14,40 +14,35 @@
   </div>
 </template>
 
-<script>
-import { toRefs } from "vue";
-import { useDraggableItem } from "../composables/draggable";
+<script setup lang="ts">
+import { toRefs } from 'vue'
+import { useDraggableItem } from '../composables/draggable'
 
-export default {
-  name: "DraggableItem",
-  props: {
-    item: Object,
-    position: Number,
-    containerId: Number
-  },
-  setup(props, context) {
-    const { item, position, containerId } = toRefs(props);
-    const {
-      draggableItemEl,
-      isDragging,
-      onDragStart,
-      onDragOver,
-      onDragEnd,
-      transitionStart,
-      transitionEnd
-    } = useDraggableItem(item, position, containerId, context);
+const props = defineProps<{
+  item: any
+  position: number
+  containerId: number
+}>()
 
-    return {
-      draggableItemEl,
-      isDragging,
-      onDragStart,
-      onDragOver,
-      onDragEnd,
-      transitionStart,
-      transitionEnd
-    };
-  }
-};
+const emit = defineEmits<{
+  itemDragOver: [value: { position: number }]
+}>()
+
+const { item, position, containerId } = toRefs(props)
+
+const emitItemDragOver = (val: { position: number }) => {
+  emit('itemDragOver', val)
+}
+
+const {
+  draggableItemEl,
+  isDragging,
+  onDragStart,
+  onDragOver,
+  onDragEnd,
+  transitionStart,
+  transitionEnd,
+} = useDraggableItem(item, position, containerId, emitItemDragOver)
 </script>
 
 <style scoped>

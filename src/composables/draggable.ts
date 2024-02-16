@@ -1,41 +1,34 @@
-import { ref, onMounted, onUpdated, watch, SetupContext, Ref } from "vue";
-import { DraggableItem } from "../types/draggable-item.interface";
-import { changeArrayOrder } from "../utils/change-order";
-import { getIdGenerator } from "../utils/id-generator";
-import { throttle } from "../utils/throttle";
-import { toOriginalArray, toDraggableItems } from "../utils/to-draggable-items";
+import { ref, onMounted, onUpdated, watch, type ModelRef, type Ref } from 'vue'
+import { type DraggableItem } from '@/types'
+import { changeArrayOrder } from '@/utils/change-order'
+import { getIdGenerator } from '@/utils/id-generator'
+import { throttle } from '@/utils/throttle'
+import { toOriginalArray, toDraggableItems } from '@/utils/to-draggable-items'
 
-let itemCurrentlyDragging = ref<DraggableItem>(null);
-let containerIdCurrentlyDraggedOver = ref<number>(null);
-let transitioning = false;
-const containerIdGenerator = getIdGenerator();
+let itemCurrentlyDragging = ref<DraggableItem>()
+let containerIdCurrentlyDraggedOver = ref(0)
+let transitioning = false
+const containerIdGenerator = getIdGenerator()
 
-const useDraggableContainer = (
-  originalItems: Ref<Array<any>>,
-  context: SetupContext
-) => {
-  const id = containerIdGenerator();
-  const items = ref<Array<DraggableItem>>(
-    toDraggableItems(originalItems.value)
-  );
+const useDraggableContainer = (originalItems: ModelRef<Array<any>>) => {
+  const id = containerIdGenerator()
+  const items = ref<Array<DraggableItem>>(toDraggableItems(originalItems.value))
 
   // update v-model when dropped
   watch(itemCurrentlyDragging, () => {
-    if (itemCurrentlyDragging.value) {
-      return;
-    }
-    context.emit("update:modelValue", toOriginalArray(items.value));
-  });
+    if (itemCurrentlyDragging.value) return
+    originalItems.value = toOriginalArray(items.value)
+  })
 
   // case when an item is being dragged to another container
   watch(containerIdCurrentlyDraggedOver, () => {
     if (containerIdCurrentlyDraggedOver.value === id) {
-      return;
+      return
     }
     items.value = items.value.filter(
-      (item) => item.id !== itemCurrentlyDragging.value.id
-    );
-  });
+      (item) => item.id !== itemCurrentlyDragging.value?.id
+    )
+  })
 
   // when an item is moved to an empty container
   const onDragOver = () => {
@@ -44,99 +37,86 @@ const useDraggableContainer = (
       !itemCurrentlyDragging.value ||
       containerIdCurrentlyDraggedOver.value === id
     ) {
-      return;
+      return
     }
 
     if (items.value.length > 0) {
-      return;
+      return
     }
 
-    containerIdCurrentlyDraggedOver.value = id;
-    items.value = [itemCurrentlyDragging.value];
-  };
+    containerIdCurrentlyDraggedOver.value = id
+    items.value = [itemCurrentlyDragging.value]
+  }
 
   // handle event emitted from draggableItem
   const onItemDragOver = ({ position }: { position: number }) => {
-    if (transitioning || !itemCurrentlyDragging.value) {
-      return;
-    }
+    if (transitioning || !itemCurrentlyDragging.value) return
+
     items.value = changeArrayOrder(
       items.value,
       itemCurrentlyDragging.value,
       position
-    );
-  };
+    )
+  }
 
   return {
     id,
     items,
     onDragOver,
     onItemDragOver,
-  };
-};
+  }
+}
 
 const useDraggableItem = (
   item: Ref<any>,
   position: Ref<number>,
   containerId: Ref<number>,
-  context: SetupContext
+  handler: (value: { position: number }) => void
 ) => {
-  const draggableItemEl = ref(null);
+  const draggableItemEl = ref({} as Element)
   const isDragging = ref(
     item.value.id === itemCurrentlyDragging.value?.id ? true : false
-  );
-  const middleY = ref(null);
+  )
+  const middleY = ref<number>(0)
 
   onMounted(async () => {
-    const box = draggableItemEl.value.getBoundingClientRect();
-    middleY.value = box.top + box.height / 2;
-  });
+    const box = draggableItemEl.value.getBoundingClientRect()
+    middleY.value = box.top + box.height / 2
+  })
 
   onUpdated(() => {
-    const box = draggableItemEl.value.getBoundingClientRect();
-    middleY.value = box.top + box.height / 2;
-  });
+    const box = draggableItemEl.value.getBoundingClientRect()
+    middleY.value = box.top + box.height / 2
+  })
 
   const onDragStart = () => {
-    itemCurrentlyDragging.value = item.value;
-    containerIdCurrentlyDraggedOver.value = containerId.value;
-    isDragging.value = true;
-  };
+    itemCurrentlyDragging.value = item.value
+    containerIdCurrentlyDraggedOver.value = containerId.value
+    isDragging.value = true
+  }
 
-  const onDragEnd = () => {
-    itemCurrentlyDragging.value = null;
-  };
-
+  const onDragEnd = () => (itemCurrentlyDragging.value = undefined)
   const onDragOver = throttle((e: DragEvent) => {
-    if (item.value.id === itemCurrentlyDragging.value.id) {
-      return;
-    }
+    if (item.value.id === itemCurrentlyDragging.value?.id) return
 
     if (containerIdCurrentlyDraggedOver.value !== containerId.value) {
-      containerIdCurrentlyDraggedOver.value = containerId.value;
+      containerIdCurrentlyDraggedOver.value = containerId.value
     }
 
-    const offset = middleY.value - e.clientY;
+    const offset = middleY?.value || 0 - e.clientY
 
-    context.emit("itemDragOver", {
+    handler({
       position: offset > 0 ? position.value : position.value + 1,
-    });
-  }, 50);
+    })
+  }, 50)
 
-  const transitionStart = () => {
-    transitioning = true;
-  };
-
-  const transitionEnd = () => {
-    transitioning = false;
-  };
-
+  const transitionStart = () => (transitioning = true)
+  const transitionEnd = () => (transitioning = false)
   watch(itemCurrentlyDragging, () => {
-    if (itemCurrentlyDragging.value) {
-      return;
-    }
-    isDragging.value = false;
-  });
+    if (itemCurrentlyDragging.value) return
+
+    isDragging.value = false
+  })
 
   return {
     draggableItemEl,
@@ -146,7 +126,7 @@ const useDraggableItem = (
     onDragEnd,
     transitionStart,
     transitionEnd,
-  };
-};
+  }
+}
 
-export { useDraggableContainer, useDraggableItem };
+export { useDraggableContainer, useDraggableItem }
