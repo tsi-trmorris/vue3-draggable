@@ -5,19 +5,24 @@ import { getIdGenerator } from '@/utils/id-generator'
 import { throttle } from '@/utils/throttle'
 import { toOriginalArray, toDraggableItems } from '@/utils/to-draggable-items'
 
-let itemCurrentlyDragging = ref<DraggableItem>()
+let itemCurrentlyDragging = ref<DraggableItem<any>>()
 let containerIdCurrentlyDraggedOver = ref(0)
 let transitioning = false
 const containerIdGenerator = getIdGenerator()
 
-const useDraggableContainer = (originalItems: ModelRef<Array<any>>) => {
+function useDraggableContainer<T>(originalItems: ModelRef<Array<T>>): {
+  id: number
+  items: Ref<Array<DraggableItem<T>>>
+  onDragOver: () => void
+  onItemDragOver: (value: { position: number }) => void
+} {
   const id = containerIdGenerator()
-  const items = ref<Array<DraggableItem>>(toDraggableItems(originalItems.value))
+  const items = ref<Array<DraggableItem<T>>>(toDraggableItems(originalItems.value))
 
   // update v-model when dropped
   watch(itemCurrentlyDragging, () => {
     if (itemCurrentlyDragging.value) return
-    originalItems.value = toOriginalArray(items.value)
+    originalItems.value = toOriginalArray(items.value) as typeof originalItems.value
   })
 
   // case when an item is being dragged to another container
@@ -61,7 +66,7 @@ const useDraggableContainer = (originalItems: ModelRef<Array<any>>) => {
 
   return {
     id,
-    items,
+    items: items as Ref<Array<DraggableItem<T>>>,
     onDragOver,
     onItemDragOver,
   }

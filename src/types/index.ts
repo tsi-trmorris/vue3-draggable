@@ -1,4 +1,4 @@
-export interface DraggableItem {
+export interface DraggableItem<T> {
   id: number
-  data: any
+  data: T
 }

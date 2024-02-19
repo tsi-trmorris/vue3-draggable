@@ -19,12 +19,12 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="T">
 import { computed } from 'vue'
 import { useDraggableContainer } from '@/composables/draggable'
 import DraggableItem from './DraggableItem.vue'
 
-const modelValue = defineModel<any[]>({ required: true })
+const modelValue = defineModel<T[]>({ default: () => [] })
 
 const props = withDefaults(
   defineProps<{

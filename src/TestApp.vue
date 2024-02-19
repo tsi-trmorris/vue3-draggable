@@ -44,7 +44,7 @@ const items1 = ref(
     .map((_, index) => ({ title: `Item ${index + 1}` }))
 )
 
-const items2 = ref<{}[]>([])
+const items2 = ref<{ title: string }[]>([])
 </script>
 
 <style>

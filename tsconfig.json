@@ -4,7 +4,7 @@
     "target": "ESNext",
     "useDefineForClassFields": true,
     "module": "ESNext",
-    "moduleResolution": "NodeNext",
+    "moduleResolution": "Bundler",
     "isolatedModules": true,
     "strict": true,
     "jsx": "preserve",
